@@ -1,6 +1,33 @@
-@Moneta.Api_HostAddress = http://localhost:5181
+@host = http://localhost:5181
 
-GET {{Moneta.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+### Connexion (récupère un JWT)
+# @name login
+POST {{host}}/api/auth/login
+Content-Type: application/json
 
-###
+{
+  "email": "demo@moneta.fr",
+  "password": "Password123!"
+}
+
+@token = {{login.response.body.token}}
+
+### Liste des factures
+GET {{host}}/api/invoices
+Authorization: Bearer {{token}}
+
+### Liste des clients
+GET {{host}}/api/clients
+Authorization: Bearer {{token}}
+
+### Création d'un client
+POST {{host}}/api/clients
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Boulangerie Léon",
+  "email": "compta@boulangerie-leon.fr",
+  "siret": "56202000000047",
+  "address": { "line1": "5 place du Marché", "postalCode": "69001", "city": "Lyon" }
+}
