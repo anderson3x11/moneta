@@ -1,10 +1,15 @@
 using Moneta.Web.Components;
+using Moneta.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+var apiBaseUrl = builder.Configuration["Api:BaseUrl"] ?? "http://localhost:5181";
+builder.Services.AddScoped<TokenStore>();
+builder.Services.AddHttpClient<MonetaApiClient>(client => client.BaseAddress = new Uri(apiBaseUrl));
 
 var app = builder.Build();
 

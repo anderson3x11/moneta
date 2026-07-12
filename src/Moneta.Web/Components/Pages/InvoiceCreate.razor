@@ -1,0 +1,145 @@
+@page "/invoices/new"
+@inherits ProtectedComponentBase
+@inject MonetaApiClient Api
+
+<PageTitle>Nouvelle facture — Moneta</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Nouvelle facture</h1>
+    <a class="btn btn-outline-secondary btn-sm" href="invoices">Retour</a>
+</div>
+
+@if (!AuthReady)
+{
+    <p class="text-muted">Chargement…</p>
+}
+else if (_clients.Count == 0)
+{
+    <p class="text-muted">Ajoutez d'abord un <a href="clients">client</a>.</p>
+}
+else
+{
+    <div class="mb-3 col-md-6">
+        <label class="form-label">Client</label>
+        <select class="form-select" @bind="_clientId">
+            <option value="">— Sélectionner —</option>
+            @foreach (var client in _clients)
+            {
+                <option value="@client.Id">@client.Name</option>
+            }
+        </select>
+    </div>
+
+    <table class="table align-middle">
+        <thead>
+            <tr>
+                <th style="width:45%">Désignation</th>
+                <th>Quantité</th>
+                <th>PU HT</th>
+                <th>TVA</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var line in _lines)
+            {
+                <tr>
+                    <td><input class="form-control form-control-sm" @bind="line.Description" /></td>
+                    <td><input type="number" step="0.01" class="form-control form-control-sm" @bind="line.Quantity" /></td>
+                    <td><input type="number" step="0.01" class="form-control form-control-sm" @bind="line.UnitPrice" /></td>
+                    <td>
+                        <select class="form-select form-select-sm" @bind="line.VatRate">
+                            @foreach (var rate in Rates)
+                            {
+                                <option value="@rate">@rate %</option>
+                            }
+                        </select>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-danger" @onclick="() => _lines.Remove(line)"
+                                disabled="@(_lines.Count == 1)">×</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <button class="btn btn-outline-secondary btn-sm mb-3" @onclick="AddLine">+ Ligne</button>
+
+    @if (_error is not null)
+    {
+        <div class="alert alert-danger">@_error</div>
+    }
+
+    <div>
+        <button class="btn btn-primary" @onclick="Submit" disabled="@_busy">Créer la facture</button>
+    </div>
+}
+
+@code {
+    private static readonly decimal[] Rates = [20m, 10m, 5.5m, 2.1m, 0m];
+
+    private sealed class LineModel
+    {
+        public string Description { get; set; } = "";
+        public decimal Quantity { get; set; } = 1;
+        public decimal UnitPrice { get; set; }
+        public decimal VatRate { get; set; } = 20m;
+    }
+
+    private IReadOnlyList<ClientResponse> _clients = [];
+    private readonly List<LineModel> _lines = [new()];
+    private string? _clientId;
+    private bool _busy;
+    private string? _error;
+
+    protected override async Task OnAuthenticatedAsync()
+    {
+        _clients = await Api.GetClientsAsync();
+    }
+
+    private void AddLine() => _lines.Add(new LineModel());
+
+    private async Task Submit()
+    {
+        _error = null;
+
+        if (!Guid.TryParse(_clientId, out var clientId))
+        {
+            _error = "Sélectionnez un client.";
+            return;
+        }
+
+        var lines = _lines
+            .Where(l => !string.IsNullOrWhiteSpace(l.Description))
+            .Select(l => new InvoiceLineRequest(l.Description, l.Quantity, l.UnitPrice, l.VatRate))
+            .ToList();
+
+        if (lines.Count == 0)
+        {
+            _error = "Ajoutez au moins une ligne.";
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            var invoice = await Api.CreateInvoiceAsync(new CreateInvoiceRequest(clientId, lines));
+            if (invoice is null)
+            {
+                _error = "Création impossible. Vérifiez les lignes.";
+                return;
+            }
+
+            Nav.NavigateTo($"invoices/{invoice.Id}");
+        }
+        catch
+        {
+            _error = "Création impossible. Vérifiez les lignes.";
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

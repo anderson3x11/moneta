@@ -1,4 +1,7 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
+@inject TokenStore Tokens
+@inject NavigationManager Nav
+@inject IJSRuntime JS
 
 <div class="page">
     <div class="sidebar">
@@ -6,8 +9,16 @@
     </div>
 
     <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+        <div class="top-row px-4 justify-content-end">
+            @if (Tokens.IsAuthenticated)
+            {
+                <span class="text-muted me-3 small">@Tokens.Email</span>
+                <a href="" @onclick="Logout" @onclick:preventDefault>Se déconnecter</a>
+            }
+            else
+            {
+                <a href="login">Se connecter</a>
+            }
         </div>
 
         <article class="content px-4">
@@ -21,3 +32,26 @@
     <a href="." class="reload">Reload</a>
     <span class="dismiss">🗙</span>
 </div>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || Tokens.IsAuthenticated)
+            return;
+
+        var token = await JS.InvokeAsync<string?>("monetaGetToken");
+        if (string.IsNullOrEmpty(token))
+            return;
+
+        var email = await JS.InvokeAsync<string?>("monetaGetEmail");
+        Tokens.Set(token, email ?? string.Empty);
+        StateHasChanged();
+    }
+
+    private async Task Logout()
+    {
+        Tokens.Clear();
+        await JS.InvokeVoidAsync("monetaClearSession");
+        Nav.NavigateTo("/login");
+    }
+}

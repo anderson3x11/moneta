@@ -1,7 +1,57 @@
-﻿@page "/"
+@page "/"
+@inject TokenStore Tokens
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Moneta — Facturation électronique</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="py-4">
+    <h1 class="display-6 fw-semibold">Moneta</h1>
+    <p class="lead text-muted">
+        Facturation avec génération de factures <strong>Factur-X</strong> (PDF/A-3 + XML EN&nbsp;16931),
+        le format hybride au cœur de la réforme française de la facturation électronique.
+    </p>
 
-Welcome to your new app.
+    <div class="row g-3 mt-2">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h2 class="h6">Factures conformes</h2>
+                    <p class="small text-muted mb-0">
+                        TVA multi-taux, numérotation séquentielle, mentions légales et totaux calculés
+                        selon le modèle sémantique EN&nbsp;16931.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h2 class="h6">Factur-X embarqué</h2>
+                    <p class="small text-muted mb-0">
+                        Le XML structuré est intégré au PDF/A-3, lisible par l'humain comme par la machine.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h2 class="h6">API sécurisée</h2>
+                    <p class="small text-muted mb-0">
+                        API REST protégée par JWT, validation stricte des entrées et architecture en couches.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        @if (Tokens.IsAuthenticated)
+        {
+            <a class="btn btn-primary" href="invoices">Voir les factures</a>
+        }
+        else
+        {
+            <a class="btn btn-primary" href="login">Se connecter</a>
+        }
+    </div>
+</div>

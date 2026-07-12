@@ -1,0 +1,60 @@
+@page "/invoices"
+@inherits ProtectedComponentBase
+@inject MonetaApiClient Api
+
+<PageTitle>Factures — Moneta</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Factures</h1>
+    <a class="btn btn-primary" href="invoices/new">Nouvelle facture</a>
+</div>
+
+@if (!AuthReady || _loading)
+{
+    <p class="text-muted">Chargement…</p>
+}
+else if (_invoices.Count == 0)
+{
+    <p class="text-muted">Aucune facture pour le moment.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Numéro</th>
+                    <th>Client</th>
+                    <th>Date</th>
+                    <th>Statut</th>
+                    <th class="text-end">Total TTC</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var invoice in _invoices)
+                {
+                    <tr role="button" @onclick="() => Open(invoice.Id)">
+                        <td class="fw-semibold">@invoice.Number</td>
+                        <td>@invoice.ClientName</td>
+                        <td>@Format.Date(invoice.IssueDate)</td>
+                        <td><span class="badge @Format.StatusBadge(invoice.Status)">@Format.StatusLabel(invoice.Status)</span></td>
+                        <td class="text-end">@Format.Euro(invoice.TotalInclVat)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private IReadOnlyList<InvoiceSummaryResponse> _invoices = [];
+    private bool _loading = true;
+
+    protected override async Task OnAuthenticatedAsync()
+    {
+        _invoices = await Api.GetInvoicesAsync();
+        _loading = false;
+    }
+
+    private void Open(Guid id) => Nav.NavigateTo($"invoices/{id}");
+}

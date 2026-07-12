@@ -1,0 +1,164 @@
+@page "/invoices/{Id:guid}"
+@inherits ProtectedComponentBase
+@inject MonetaApiClient Api
+
+<PageTitle>Facture — Moneta</PageTitle>
+
+@if (!AuthReady || _loading)
+{
+    <p class="text-muted">Chargement…</p>
+}
+else if (_invoice is null)
+{
+    <p class="text-danger">Facture introuvable.</p>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+            <h1 class="h3 mb-1">Facture @_invoice.Number</h1>
+            <span class="badge @Format.StatusBadge(_invoice.Status)">@Format.StatusLabel(_invoice.Status)</span>
+        </div>
+        <a class="btn btn-outline-secondary btn-sm" href="invoices">Retour</a>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="text-muted small">Client</div>
+            <div class="fw-semibold">@_invoice.ClientName</div>
+        </div>
+        <div class="col-md-3">
+            <div class="text-muted small">Émise le</div>
+            <div>@Format.Date(_invoice.IssueDate)</div>
+        </div>
+        <div class="col-md-3">
+            <div class="text-muted small">Échéance</div>
+            <div>@Format.Date(_invoice.DueDate)</div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Désignation</th>
+                    <th class="text-end">Qté</th>
+                    <th class="text-end">PU HT</th>
+                    <th class="text-end">TVA</th>
+                    <th class="text-end">Total HT</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var line in _invoice.Lines)
+                {
+                    <tr>
+                        <td>@line.Description</td>
+                        <td class="text-end">@line.Quantity</td>
+                        <td class="text-end">@Format.Euro(line.UnitPriceExclVat)</td>
+                        <td class="text-end">@line.VatPercentage %</td>
+                        <td class="text-end">@Format.Euro(line.NetAmount)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="row justify-content-end">
+        <div class="col-md-4">
+            <div class="d-flex justify-content-between"><span>Total HT</span><span>@Format.Euro(_invoice.TotalExclVat)</span></div>
+            @foreach (var vat in _invoice.VatBreakdown)
+            {
+                <div class="d-flex justify-content-between text-muted small">
+                    <span>TVA @vat.Percentage %</span><span>@Format.Euro(vat.VatAmount)</span>
+                </div>
+            }
+            <hr class="my-2" />
+            <div class="d-flex justify-content-between fw-bold fs-5"><span>Total TTC</span><span>@Format.Euro(_invoice.TotalInclVat)</span></div>
+        </div>
+    </div>
+
+    @if (_error is not null)
+    {
+        <div class="alert alert-danger mt-3">@_error</div>
+    }
+
+    <div class="mt-4 d-flex gap-2">
+        @if (_invoice.Status == InvoiceStatus.Draft)
+        {
+            <button class="btn btn-primary" @onclick="Issue" disabled="@_busy">Émettre</button>
+        }
+        @if (_invoice.Status == InvoiceStatus.Issued)
+        {
+            <button class="btn btn-success" @onclick="Pay" disabled="@_busy">Marquer payée</button>
+            <button class="btn btn-outline-danger" @onclick="Cancel" disabled="@_busy">Annuler</button>
+        }
+        <button class="btn btn-outline-primary ms-auto" @onclick="Download" disabled="@_busy">
+            Télécharger le Factur-X
+        </button>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private InvoiceResponse? _invoice;
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+
+    protected override async Task OnAuthenticatedAsync()
+    {
+        _invoice = await Api.GetInvoiceAsync(Id);
+        _loading = false;
+    }
+
+    private async Task Run(Func<Task<InvoiceResponse?>> action)
+    {
+        _error = null;
+        _busy = true;
+        try
+        {
+            var updated = await action();
+            if (updated is not null)
+                _invoice = updated;
+        }
+        catch
+        {
+            _error = "L'opération a échoué.";
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private Task Issue() => Run(() => Api.IssueInvoiceAsync(Id));
+    private Task Pay() => Run(() => Api.PayInvoiceAsync(Id));
+    private Task Cancel() => Run(() => Api.CancelInvoiceAsync(Id));
+
+    private async Task Download()
+    {
+        _error = null;
+        _busy = true;
+        try
+        {
+            var file = await Api.DownloadFacturXAsync(Id);
+            if (file is null)
+            {
+                _error = "Génération du Factur-X impossible.";
+                return;
+            }
+
+            var base64 = Convert.ToBase64String(file.Content);
+            await JS.InvokeVoidAsync("monetaDownload", file.FileName, file.ContentType, base64);
+        }
+        catch
+        {
+            _error = "Génération du Factur-X impossible.";
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

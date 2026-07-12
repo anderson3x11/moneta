@@ -1,0 +1,84 @@
+@page "/login"
+@inject MonetaApiClient Api
+@inject TokenStore Tokens
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<PageTitle>Connexion — Moneta</PageTitle>
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <h1 class="h4 mb-3">Connexion</h1>
+
+                <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <input class="form-control" @bind="_email" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Mot de passe</label>
+                    <input type="password" class="form-control" @bind="_password" @onkeydown="OnKey" />
+                </div>
+
+                @if (_error is not null)
+                {
+                    <div class="alert alert-danger py-2">@_error</div>
+                }
+
+                <button class="btn btn-primary w-100" @onclick="SignIn" disabled="@_busy">
+                    @(_busy ? "Connexion…" : "Se connecter")
+                </button>
+
+                <p class="text-muted small mt-3 mb-0">
+                    Compte de démonstration pré-rempli.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string _email = "demo@moneta.fr";
+    private string _password = "Password123!";
+    private string? _error;
+    private bool _busy;
+
+    protected override void OnInitialized()
+    {
+        if (Tokens.IsAuthenticated)
+            Nav.NavigateTo("/invoices");
+    }
+
+    private async Task OnKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            await SignIn();
+    }
+
+    private async Task SignIn()
+    {
+        _error = null;
+        _busy = true;
+        try
+        {
+            if (await Api.LoginAsync(_email, _password))
+            {
+                await JS.InvokeVoidAsync("monetaSetSession", Tokens.Token, Tokens.Email);
+                Nav.NavigateTo("/invoices");
+            }
+            else
+            {
+                _error = "Email ou mot de passe invalide.";
+            }
+        }
+        catch
+        {
+            _error = "Impossible de joindre l'API. Est-elle démarrée ?";
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}
