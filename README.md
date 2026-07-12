@@ -4,6 +4,21 @@ Application de facturation qui génère des factures au format **Factur-X** : un
 
 Le projet couvre une chaîne complète et réaliste : API REST sécurisée, front web, persistance, calcul de TVA multi-taux et génération du document conforme.
 
+## Aperçu
+
+La facture Factur-X générée (PDF/A-3 avec le XML EN 16931 embarqué) :
+
+<img src="docs/screenshots/facturx-pdf.png" alt="Facture Factur-X générée" width="600" />
+
+Le détail d'une facture et la liste, côté application :
+
+<p>
+  <img src="docs/screenshots/invoice-detail.png" alt="Détail d'une facture" width="420" />
+  <img src="docs/screenshots/invoices.png" alt="Liste des factures" width="420" />
+</p>
+
+D'autres captures (accueil, clients, création de facture, connexion) sont dans `docs/screenshots`.
+
 ## Fonctionnalités
 
 - Gestion des clients et des factures (brouillon, émission, paiement, annulation)
