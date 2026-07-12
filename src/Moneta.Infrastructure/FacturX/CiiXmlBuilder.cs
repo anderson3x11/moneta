@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Text;
+using System.Xml;
 using System.Xml.Linq;
 using Moneta.Domain.Invoicing;
 
@@ -19,7 +21,7 @@ public static class CiiXmlBuilder
     private const string CommercialInvoice = "380";
     private const string DateFormat = "102"; // CCYYMMDD
 
-    public static string Build(Invoice invoice, Client client, SellerProfile seller)
+    public static byte[] Build(Invoice invoice, Client client, SellerProfile seller)
     {
         var doc = new XDocument(
             new XDeclaration("1.0", "UTF-8", null),
@@ -31,9 +33,17 @@ public static class CiiXmlBuilder
                 Document(invoice),
                 Transaction(invoice, client, seller)));
 
-        using var writer = new StringWriter();
-        doc.Save(writer);
-        return writer.ToString();
+        var settings = new XmlWriterSettings
+        {
+            Encoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
+            Indent = true
+        };
+
+        using var stream = new MemoryStream();
+        using (var writer = XmlWriter.Create(stream, settings))
+            doc.Save(writer);
+
+        return stream.ToArray();
     }
 
     private static XElement Context() =>

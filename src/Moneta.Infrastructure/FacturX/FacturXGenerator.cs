@@ -1,4 +1,3 @@
-using System.Text;
 using Moneta.Application.Abstractions;
 using Moneta.Domain.Invoicing;
 using QuestPDF.Fluent;
@@ -16,8 +15,7 @@ public sealed class FacturXGenerator : IFacturXGenerator
 
     public FacturXDocument Generate(Invoice invoice, Client client, SellerProfile seller)
     {
-        var xml = CiiXmlBuilder.Build(invoice, client, seller);
-        var xmlBytes = Encoding.UTF8.GetBytes(xml);
+        var xmlBytes = CiiXmlBuilder.Build(invoice, client, seller);
 
         var basePdf = new InvoicePdfDocument(invoice, client, seller).GeneratePdf();
 
