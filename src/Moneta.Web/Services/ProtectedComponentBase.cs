@@ -22,17 +22,7 @@ public abstract class ProtectedComponentBase : ComponentBase
         if (!firstRender)
             return;
 
-        if (!Tokens.IsAuthenticated)
-        {
-            var token = await JS.InvokeAsync<string?>("monetaGetToken");
-            if (!string.IsNullOrEmpty(token))
-            {
-                var email = await JS.InvokeAsync<string?>("monetaGetEmail");
-                Tokens.Set(token, email ?? string.Empty);
-            }
-        }
-
-        if (!Tokens.IsAuthenticated)
+        if (!await Tokens.RestoreAsync(JS))
         {
             Nav.NavigateTo("/login");
             return;

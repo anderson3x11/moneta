@@ -1,5 +1,6 @@
 @page "/"
 @inject TokenStore Tokens
+@inject IJSRuntime JS
 
 <PageTitle>Moneta — Facturation électronique</PageTitle>
 
@@ -55,3 +56,11 @@
         }
     </div>
 </div>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && await Tokens.RestoreAsync(JS))
+            StateHasChanged();
+    }
+}

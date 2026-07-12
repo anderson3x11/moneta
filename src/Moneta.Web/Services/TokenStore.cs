@@ -1,7 +1,10 @@
+using Microsoft.JSInterop;
+
 namespace Moneta.Web.Services;
 
 /// <summary>
-/// Holds the signed-in user's JWT for the lifetime of the Blazor circuit.
+/// Holds the signed-in user's JWT for the lifetime of the Blazor circuit, and
+/// restores it from browser storage after a reload.
 /// </summary>
 public sealed class TokenStore
 {
@@ -20,5 +23,23 @@ public sealed class TokenStore
     {
         Token = null;
         Email = null;
+    }
+
+    /// <summary>
+    /// Restores the session from local storage when the circuit has none yet.
+    /// Must be called after the first render, once JS interop is available.
+    /// </summary>
+    public async Task<bool> RestoreAsync(IJSRuntime js)
+    {
+        if (IsAuthenticated)
+            return true;
+
+        var token = await js.InvokeAsync<string?>("monetaGetToken");
+        if (string.IsNullOrEmpty(token))
+            return false;
+
+        var email = await js.InvokeAsync<string?>("monetaGetEmail");
+        Set(token, email ?? string.Empty);
+        return true;
     }
 }

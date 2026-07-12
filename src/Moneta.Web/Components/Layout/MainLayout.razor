@@ -36,16 +36,8 @@
 @code {
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender || Tokens.IsAuthenticated)
-            return;
-
-        var token = await JS.InvokeAsync<string?>("monetaGetToken");
-        if (string.IsNullOrEmpty(token))
-            return;
-
-        var email = await JS.InvokeAsync<string?>("monetaGetEmail");
-        Tokens.Set(token, email ?? string.Empty);
-        StateHasChanged();
+        if (firstRender && await Tokens.RestoreAsync(JS))
+            StateHasChanged();
     }
 
     private async Task Logout()
