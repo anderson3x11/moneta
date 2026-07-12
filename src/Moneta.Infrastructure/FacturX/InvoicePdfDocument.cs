@@ -10,6 +10,7 @@ namespace Moneta.Infrastructure.FacturX;
 public sealed class InvoicePdfDocument(Invoice invoice, Client client, SellerProfile seller) : IDocument
 {
     private static readonly CultureInfo Fr = CultureInfo.GetCultureInfo("fr-FR");
+    private static readonly Color Accent = Color.FromHex("#2563EB");
 
     public DocumentMetadata GetMetadata() => new()
     {
@@ -29,6 +30,7 @@ public sealed class InvoicePdfDocument(Invoice invoice, Client client, SellerPro
         {
             page.Size(PageSizes.A4);
             page.Margin(40);
+            page.PageColor(Colors.White);
             page.DefaultTextStyle(t => t.FontSize(10).FontColor(Colors.Grey.Darken4));
 
             page.Header().Element(Header);
@@ -55,7 +57,7 @@ public sealed class InvoicePdfDocument(Invoice invoice, Client client, SellerPro
 
             row.ConstantItem(200).Column(col =>
             {
-                col.Item().AlignRight().Text("FACTURE").FontSize(22).Bold().FontColor(Colors.Blue.Darken2);
+                col.Item().AlignRight().Text("FACTURE").FontSize(22).Bold().FontColor(Accent);
                 col.Item().AlignRight().Text(invoice.Number).FontSize(12).SemiBold();
                 col.Item().PaddingTop(8).AlignRight().Text($"Date : {invoice.IssueDate.ToString("dd/MM/yyyy", Fr)}");
                 col.Item().AlignRight().Text($"Échéance : {invoice.DueDate.ToString("dd/MM/yyyy", Fr)}");
@@ -151,7 +153,7 @@ public sealed class InvoicePdfDocument(Invoice invoice, Client client, SellerPro
 
     private static void HeaderCell(TableCellDescriptor header, string text, bool right)
     {
-        var cell = header.Cell().Background(Colors.Blue.Darken2).Padding(6);
+        var cell = header.Cell().Background(Accent).Padding(6);
         var aligned = right ? cell.AlignRight() : cell;
         aligned.Text(text).FontColor(Colors.White).SemiBold().FontSize(9);
     }
