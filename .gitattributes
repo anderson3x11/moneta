@@ -1,0 +1,16 @@
+# Normalize line endings
+* text=auto
+
+# C# / project files
+*.cs text diff=csharp
+*.csproj text
+*.slnx text
+*.props text
+*.razor text
+*.json text
+*.md text
+
+# Binaries
+*.png binary
+*.pdf binary
+*.ico binary

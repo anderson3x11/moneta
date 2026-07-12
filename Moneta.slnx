@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Moneta.Api/Moneta.Api.csproj" />
+    <Project Path="src/Moneta.Application/Moneta.Application.csproj" />
+    <Project Path="src/Moneta.Domain/Moneta.Domain.csproj" />
+    <Project Path="src/Moneta.Infrastructure/Moneta.Infrastructure.csproj" />
+    <Project Path="src/Moneta.Web/Moneta.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Moneta.Application.Tests/Moneta.Application.Tests.csproj" />
+    <Project Path="tests/Moneta.Domain.Tests/Moneta.Domain.Tests.csproj" />
+  </Folder>
+</Solution>

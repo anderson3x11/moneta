@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.9" />
+    <!-- Override transitive 2.0.0 flagged by advisory GHSA-v5pm-xwqc-g5wc -->
+    <PackageReference Include="Microsoft.OpenApi" Version="2.10.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Moneta.Application\Moneta.Application.csproj" />
+    <ProjectReference Include="..\Moneta.Infrastructure\Moneta.Infrastructure.csproj" />
+    <ProjectReference Include="..\Moneta.Domain\Moneta.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
